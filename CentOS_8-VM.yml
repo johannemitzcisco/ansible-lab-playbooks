@@ -1,0 +1,42 @@
+---
+# Create CentOS VM
+
+- name: VM from template
+  vars:
+    vm_template: "CentOS 8 1NIC 150GB Template"
+    vm_folder: Secure Agile Exchange
+    vm_datacenter: Lab
+    vm_esxhost: 10.2.1.36
+    vm_datastore: NetApp-VM-1
+    vm_name: "SAE Controller Container Host 2"
+    vm_mgmt_network: VLAN-0002-Lab-Management
+  vars_files:
+    - lab-infra-variables-encrypted.yml
+    - CentOS-4GBmem-150GBdisk.yml
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: Create VM from template
+      vmware_guest:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_user }}"
+        password: "{{ vcenter_pass }}"
+        esxi_hostname: "{{ vm_esxhost }}"
+        datacenter: "{{ vm_datacenter }}"
+        folder: "{{ vm_folder }}"
+        name: "{{ vm_name }}"
+        template: "{{ vm_template }}"
+        disk:
+          - size_gb: "{{ vm_disk_size }}"
+            type: thin
+            datastore: "{{ vm_datastore }}"
+        networks:
+        - name: "{{ vm_mgmt_network }}"
+          type: dhcp
+        hardware:
+          memory_mb: "{{ vm_memory }}"
+        wait_for_ip_address: True
+        state: present
+      register: newvm
